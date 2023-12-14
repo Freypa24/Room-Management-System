@@ -2,6 +2,7 @@ package backend;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
+import java.util.ArrayList;
 
 import javax.swing.*;
 
@@ -9,12 +10,12 @@ import backend.Control.Admin;
 import backend.Control.Professor;
 
 //Parent Class
-	class Room
+	abstract class Room
 	{
 		// Encapsulation
 		protected String college = "College of Engineering and Architecture";
 		private String[] timeSchedule = {"6:00am - 7:30am", "7:30am - 9:00am", "9:00am - 10:30am"};
-		private boolean[] isAvailable = {true, true, true};
+		private boolean[] isAvailable = {true, false, true};
 		private String roomIdentity;
 		private int capacity;
 		enum features
@@ -22,23 +23,26 @@ import backend.Control.Professor;
 			Door, StudentChair, TeacherTable
 		}
 		
-		// Overloading Polymorphism technique & getters setters
-		// Set the selected time schedule to available / not available
-		public void availability(String selected, boolean set)
+		// Set the time availability to false
+		public void setTimeAvailability(String time)
 		{
-			int index = indexOfTime(selected);
-			
-			// check if a time schedule is found
-			if(index != -1)
+			int index = 0;
+			for(int i = 0; i < timeSchedule.length; i++)
 			{
-				isAvailable[index] = set; // Set the found time schedule to available / not available
-			}
-			else	// None found
-			{
-				System.out.println("Nothing found");
+				if(time.equals(timeSchedule[i]))
+				{
+					isAvailable[index] = false;
+					break;
+				}
+				else
+				{
+					index++;
+				}
 			}
 		}
 		
+		
+		// Set the selected time schedule to available / not available
 		public void availability(int selected, boolean set)
 		{
 			
@@ -46,30 +50,40 @@ import backend.Control.Professor;
 			
 		}
 		
-		public String[] availability(int total)
+		// Grab a list of available time for a room
+		public String[] availability()
 		{
-			String[] str = new String[total];
-			for(int i = 0; i < total; i++)
-			{
-				if(isAvailable[i] == true)
-				{
-					str[i] = timeSchedule[i];
-				}
-			}
-			return str;
-		}
-		
-		private int indexOfTime(String timeSched)
-		{
+			ArrayList<String> availableTimeList = new ArrayList<>();
+			
 			for(int i = 0; i < timeSchedule.length; i++)
 			{
-				if(timeSchedule[i].equals(timeSched))
+				if(isAvailable[i])
 				{
-					return i;
+					System.out.println("Time " + timeSchedule[i] + " ");
+					availableTimeList.add(timeSchedule[i]);
 				}
 			}
-			// Time not found? return nothing found
-			return -1;
+			String[] newTimeList = new String[availableTimeList.size()];
+		    newTimeList = availableTimeList.toArray(newTimeList);
+		    
+			return newTimeList;
+		}
+		
+		// Get the total number of available time of a room.
+		// Used for making the size of availableTime[] in Room Management System more dynamic
+		public int getAvailability()
+		{
+			ArrayList<String> availableTimeList = new ArrayList<>();
+			
+			for(int i = 0; i < timeSchedule.length; i++)
+			{
+				if(isAvailable[i])
+				{
+					availableTimeList.add(timeSchedule[i]);
+				}
+			}
+			System.out.println("Size is " +availableTimeList.size() );
+			return availableTimeList.size();
 		}
 		
 		public void setCapacity(int num)
@@ -103,17 +117,6 @@ import backend.Control.Professor;
 	}
 	
 //Inheritance
-	class standardRoom extends Room
-	{
-		enum features
-		{
-			Door,
-			ChalkBoard,
-			StudentChair,
-			TeacherTable
-		}		
-	}
-	
 	class ComputerLabRoom extends Room
 	{
 		enum features
@@ -125,6 +128,18 @@ import backend.Control.Professor;
 			Monitor,
 			StudentPcUnits,
 			AirCondition
+		}		
+	}
+	
+	class LectureRoom extends Room
+	{
+		enum features
+		{
+			Door,
+			ChalkBoard,
+			StudentChair,
+			TeacherTable,
+			ElecticFans
 		}
 	}
 	
@@ -285,6 +300,8 @@ public class Control
 	{
 		private log[] statusLogs = new log[LimitOfLogs];
 		
+		private int count = -1;	// Count is to correct the logic for the meantime. Its used by getLatestLog()
+		
 		Professor(String name, char[] password)
 		{
 			this.username = name;
@@ -322,10 +339,14 @@ public class Control
 		}
 		// wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww
 		
-		// To be used for displaying in GUI, grabs the latest log
-		public log getLatestLog()
+		// To be used for displaying at the login Gui, grabs the latest log from a staff
+		// update this one about going up to going down
+		public log getLatestLog() 
 		{
-			return statusLogs[0];
+			if (count < 6) {
+		        count++;
+		    }
+			return statusLogs[Math.min(count, 5)];
 		}
 		
 		// Generate a new log. Usually used when an log gets updated / added
@@ -402,7 +423,7 @@ public class Control
 			{
 				if(logList[i].getUsername().equals(name))
 				{
-					System.out.println("Show grabbed total " + logList[i].getStatus() + " " + logList[i].getUsername());
+					System.out.println("Show grabbed total " + i + " " + logList[i].getStatus() + " " + logList[i].getUsername() + " " + logList[i].getRoom() + " " + logList[i].getTimeSchedule());
 					statusLogs[count].setStatus(logList[i].getStatus());
 					statusLogs[count].setRoom(logList[i].getRoom());
 					statusLogs[count].setUsername(logList[i].getUsername());
@@ -466,56 +487,134 @@ public class Control
 			
 		}
 		
-		// this is the method that edits the log. Mainly, the status attribute
-		public void approveLog(int index, int pageNum)
+		// these are the methods that edits the log. Mainly, the status attribute
+		// This method approves the log
+		public void approveLog(int index, int pageNum, ComputerLabRoom[] rooms)
 		{
-			switch(pageNum)
+			System.out.println("Index " + index);
+			System.out.println("Page " + pageNum);
+
+			// Check first if index is within 0-29 and pageNum is 1-3. This avoids error and secures the method from errors
+			if((index >= 0 && index < 30) && (pageNum > 0 && pageNum < 4))
 			{
-				case 0:
-					logList[index].setStatus("Approved");
-					break;
+				switch(pageNum)
+				{
 				case 1:
-					logList[index+10].setStatus("Approved");
+					logList[index].setStatus("Approved");
+					denyAllSameLogs(logList[index]);
+					listOfRooms.removeTimeFromList(logList[index].getTimeSchedule(), logList[index].getRoom(), rooms);
 					break;
 				case 2:
+					logList[index+10].setStatus("Approved");
+					denyAllSameLogs(logList[index]);
+					listOfRooms.removeTimeFromList(logList[index].getTimeSchedule(), logList[index].getRoom(), rooms);
+					break;
+				case 3:
 					logList[index+20].setStatus("Approved");
+					denyAllSameLogs(logList[index]);
+					listOfRooms.removeTimeFromList(logList[index].getTimeSchedule(), logList[index].getRoom(), rooms);
 					break;
 				default:
+				}	
 			}
-			
+			else
+			{
+				System.out.println("Invalid index/Page number");
+			}
+		}
+		
+		// This method denies the log
+		public void denyLog(int index, int pageNum)
+		{
+			System.out.println("Index " + index);
+			System.out.println("Page " + pageNum);
+
+			// Check first if index is within 0-29 and pageNum is 1-3. This avoids error and secures the method from errors
+			if((index >= 0 && index < 30) && (pageNum > 0 && pageNum < 4))
+			{
+				switch(pageNum)
+				{
+					case 1:
+						logList[index].setStatus("Denied");
+						break;
+					case 2:
+						logList[index+10].setStatus("Denied");
+						break;
+					case 3:
+						logList[index+20].setStatus("Denied");
+						break;
+					default:
+				}
+			}
+			else
+			{
+				System.out.println("Invalid index/Page number");
+			}
+		}
+		
+		// Because a request was approved by the admin. The same requests from other users should be denied as
+		// it is reserved by the user that the admin has approved.
+		public void denyAllSameLogs(log approvedLog)
+		{
+			for(int i = 0; i < LimitOfLogsAdmin; i++)
+			{
+				// First check if the found log's status is pending. Because we don't want to check status' that are already
+				// Denied and Approved to improve performance. Then check if what we got was not the log that just got approved/denied
+				if(logList[i].getStatus().equals("Pending") && !logList[i].equals(approvedLog))
+				{
+					// Check every value of each log from logList[] to identity if they are identical to approvedLog.
+					// if so, that means there are same requests from other staffs and must be denied because a request got approved.
+					if(logList[i].getTimeSchedule().equals(approvedLog.getTimeSchedule()) && logList[i].getRoom().equals(approvedLog.getRoom()))
+					{
+						logList[i].setStatus("Denied");
+					}
+							
+						
+							
+				}
+			}
 		}
 		
 		public log[] displayLogs(int pageNum)
 		{
-			switch (pageNum)
+			// Check first if pageNum is 1-3. This avoids error and secures the method from errors
+			if(pageNum > 0 && pageNum < 4)
 			{
-			case 0:
-				// We are grabbing the most recent logs
-				for(int i = 0; i < 10; i++)
+				switch (pageNum)
 				{
-					dummyLog[i] = logList[i];
+					case 1:
+						// We are grabbing the most recent logs
+						for(int i = 0; i < 10; i++)
+						{
+							dummyLog[i] = logList[i];
+						}
+						break;
+					case 2:
+						// We are grabbing the next set of 10 logs
+						for(int i = 10; i < 20; i++)
+						{
+							dummyLog[i - 10] = logList[i];
+						}
+						break;
+					case 3:
+						// We are grabbing the remaining logs
+						for(int i = 20; i < getTotalLogsAdmin(); i++)
+					{
+							dummyLog[i - 20] = logList[i];
+					}
+						break;
+					default:
+						System.out.println("No such Page Number is found, displaying default page");
+						return displayLogs(1);
 				}
-				break;
-			case 1:
-				// We are grabbing the next set of 10 logs
-				for(int i = 10; i < 20; i++)
-				{
-					dummyLog[i - 10] = logList[i];
-				}
-				break;
-			case 2:
-				// We are grabbing the remaining logs
-				for(int i = 20; i < getTotalLogs(); i++)
-				{
-					dummyLog[i - 20] = logList[i];
-				}
-				break;
-			default:
-				System.out.println("No such Page Number is found");
-				return null;
+			
+			}
+			else
+			{
+				System.out.println("Invalid index/Page number");
 			}
 			return dummyLog;
-		}
+	}
 	}
 	
 	public static class listOfRooms
@@ -523,15 +622,15 @@ public class Control
 		private final static int totalRooms = 6;
 		private final static int totalTimeSched = 3;
 		
-		public static standardRoom[] generateRooms()
+		public static ComputerLabRoom[] generateRooms()
 		{
-			standardRoom[] dummy = new standardRoom[totalRooms];
+			ComputerLabRoom[] dummy = new ComputerLabRoom[totalRooms];
 			
 			// Generate Total number of rooms in a building floor.
 			for(int i = 0; i < totalRooms; i++)
 			{
-				dummy[i] = new standardRoom();
-				dummy[i].setRoomIdentity("Standard Room " + i);
+				dummy[i] = new ComputerLabRoom();
+				dummy[i].setRoomIdentity("Computer Lab " + i);
 				
 				// Set all possible time schedules to default (Available / True)
 				for(int j = 0; j < totalTimeSched; j++)
@@ -548,14 +647,27 @@ public class Control
 			return totalRooms;
 		}
 		
-		public static int getTotalTime()
+		public static int getTotalTime(ComputerLabRoom compLab)
 		{
-			return totalTimeSched;
+			return compLab.getAvailability();
 		}
 		
-		public static String[] getAvailableTime(standardRoom stdRoom)
+		public static String[] getAvailableTime(ComputerLabRoom comLab)
 		{
-			return stdRoom.availability(totalTimeSched);
+			return comLab.availability();
+		}
+		
+		// This method runs when a request has been approved by the admin. We must remove that specific time from the specific room
+		// to be unselectable for future requests.
+		public static void removeTimeFromList(String time, String selectedRoom, ComputerLabRoom[] rooms)
+		{
+			for(int i = 0; i < rooms.length; i++)
+			{
+				if(selectedRoom.equals(rooms[i].getRoomIdentity()))
+				{
+					rooms[i].setTimeAvailability(time);
+				}
+			}
 		}
 	}
 }

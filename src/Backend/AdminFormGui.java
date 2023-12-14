@@ -13,7 +13,13 @@ public class AdminFormGui extends JFrame
 	private loginFormGui loginForm;
 	private User[] listOfUsers;
 	private log[] listOfLogs = new log[10];
+	private ComputerLabRoom[] listOfRooms;
 	private int currentPage;
+
+	private header group1;
+	private selectionList group2;
+	private logList group3;
+
 	
 	// will contain greeting, notifications, and logout
 	class header extends JPanel implements ActionListener
@@ -61,10 +67,10 @@ public class AdminFormGui extends JFrame
 	{
 		private JPanel[] pagePanel;
 		private JButton[] pageButton;
+		private int count = 1;
 		
 		selectionList()
 		{
-			
 			setLayout(new GridBagLayout());
 			GridBagConstraints gbc = new GridBagConstraints();
 			gbc.gridx = 0;
@@ -74,10 +80,12 @@ public class AdminFormGui extends JFrame
 			pagePanel = new JPanel[3];
 			pageButton = new JButton[3];
 			
+			// The loop has to start at 0. but the buttons should start 1.
+			// This is because the array indexes start at 0. but to users/humans, we should see it start at 1
 			for(int i = 0; i < 3; i++)
 			{
 				pagePanel[i] = new JPanel();
-				pageButton[i] = new JButton("Page " + i);
+				pageButton[i] = new JButton("Page " + (count + i));
 				pageButton[i].addActionListener(new pageListener(i));
 				pagePanel[i].add(pageButton[i]);
 				add(pagePanel[i], gbc);
@@ -92,7 +100,7 @@ public class AdminFormGui extends JFrame
 		
 		public pageListener(int pageNum)
 		{
-			this.pageNum = pageNum;
+			this.pageNum = pageNum + 1;		// We add 1 because we want to make sure it the display starts from 1 and not 0.
 		}
 		@Override
 		public void actionPerformed(ActionEvent e) 
@@ -167,7 +175,7 @@ public class AdminFormGui extends JFrame
 				usernamePanel[i].add(username[i]);
 				
 				approve[i].addActionListener(new approveListener(i));
-				deny[i].addActionListener(new denyListener());
+				deny[i].addActionListener(new denyListener(i));
 				
 				approve[i].setEnabled(false);
 				deny[i].setEnabled(false);
@@ -241,7 +249,7 @@ public class AdminFormGui extends JFrame
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			// TODO Auto-generated method stub
-			activeAccount.approveLog(buttonNumber, currentPage);
+			activeAccount.approveLog(buttonNumber, currentPage, listOfRooms);
 			group3.updateList();
 		}
 		
@@ -250,32 +258,26 @@ public class AdminFormGui extends JFrame
 	class denyListener implements ActionListener
 	{
 
+		int buttonNumber;
+		
+		denyListener(int buttonNumber)
+		{
+			this.buttonNumber = buttonNumber;
+		}
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			// TODO Auto-generated method stub
-			
+			activeAccount.denyLog(buttonNumber, currentPage);
+			group3.updateList();
 		}
 		
 	}
 	
-	// The footer contains addition buttons
-	class footer extends JPanel
-	{
-		private JPanel footerPanel;
-		
-		footer()
-		{
-			footerPanel = new JPanel();
-		}
-	}
-	
-	private header group1;
-	private selectionList group2;
-	private logList group3;
-
 	// Load updated list into display
-	public void loadData()
+	public void loadData(ComputerLabRoom[] listOfRooms)
 	{
+		currentPage = 1;
+		this.listOfRooms = listOfRooms;
 		group3.updateList();
 	}
 	
@@ -286,7 +288,7 @@ public class AdminFormGui extends JFrame
 		loginForm = lfg;
 
 		// We are initializing the default 10 recent logs. default display of logs is page 1
-		listOfLogs = activeAccount.displayLogs(0);
+		listOfLogs = activeAccount.displayLogs(1);
 		
 		setLayout(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();

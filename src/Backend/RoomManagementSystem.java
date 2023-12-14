@@ -2,6 +2,8 @@ package backend;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+
 import javax.swing.*;
 
 import backend.Control.Admin;
@@ -13,10 +15,15 @@ public class RoomManagementSystem extends JFrame
 {
 	public Professor activeAccount;
 	public User[] listOfUsers;
-	public standardRoom listOfRooms[];
-	public String[] availableTime = new String[Control.listOfRooms.getTotalTime()];
+	public ComputerLabRoom listOfRooms[];
+	public String[] availableTime = new String[3];
 	public String[] availableRoom = new String[Control.listOfRooms.getTotalRooms()];
 	public loginFormGui loginForm;
+
+	private upperBar group1;
+	private middleBar group2;
+	private lowerBar group3;
+	
 	
 // List of availability of each room on selected time
 	class middleBar extends JPanel
@@ -43,8 +50,6 @@ public class RoomManagementSystem extends JFrame
 			
 			for(int i = 0; i < Limit; i++)
 			{
-				
-				System.out.print(i);
 				roomStatusPanel[i] = new JPanel();
 				roomStatusPanel[i].setBorder(BorderFactory.createLineBorder(Color.GRAY ,1));
 				roomNamePanel[i] = new JPanel();
@@ -170,15 +175,22 @@ public class RoomManagementSystem extends JFrame
 	{
 		private JPanel lowerPanel;
 		private JButton requestBtn;
-		private JComboBox<String> timeSelect;
+		public JComboBox<String> timeSelect;
 		private JComboBox<String> roomSelect;
 
+		public void updateTimeComboBox() 
+		{	
+			timeSelect.removeAllItems();
+	            DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) timeSelect.getModel();
+	            for (String item : availableTime) {
+	                model.addElement(item);
+	            }
+			
+		}
+		
 		lowerBar()
 		{
-			
-			// Because the default dropdown selected is the first item, so we get the available time for the first room
-			showAvailable(listOfRooms[0]);
-			
+			showAvailableTime(listOfRooms[0]);
 			// We get all the available rooms from the previous array and initialize them here
 			for(int i = 0; i < listOfRooms.length; i++)
 			{
@@ -196,8 +208,8 @@ public class RoomManagementSystem extends JFrame
 			
 			
 			lowerPanel = new JPanel();
-			
-			timeSelect = new JComboBox<String>(availableTime);
+
+			timeSelect = new JComboBox<>(availableTime);
 			timeSelect.addItemListener(new timeListener("time Select"));
 			timeSelect.setVisible(true);
 			lowerPanel.add(timeSelect);
@@ -225,17 +237,23 @@ public class RoomManagementSystem extends JFrame
 			group2.reloadList();
 			group2.updateListLogin();
 		}
+		
 	}
-	
+
 	// This updates the selection dropdown list of the available time schedule for a selected room
-	public void showAvailable(standardRoom stdRoom)
+	public void showAvailableTime(ComputerLabRoom compLab)
 	{
-		availableTime = new String[Control.listOfRooms.getTotalTime()];
-		availableTime = Control.listOfRooms.getAvailableTime(stdRoom);
+		availableTime = new String[Control.listOfRooms.getTotalTime(compLab)];
+		//System.out.println("Num of length " + availableTime.length);
+		availableTime = Control.listOfRooms.getAvailableTime(compLab);
 		//for(int i = 0; i < availableTime.length; i++)
 		//{
-		//	System.out.println(availableTime[i]);				
+		//	System.out.println("times are " + availableTime[i]);
 		//}
+		for(int i = 0; i < availableTime.length; i++)
+		{
+			System.out.println(availableTime[i]);				
+		}
 	}
 	
 	class timeListener implements ItemListener
@@ -278,28 +296,27 @@ public class RoomManagementSystem extends JFrame
 					 // Check if matching name found in list of rooms and grab that instance
 					 if(selectedItem.equals(listOfRooms[i].getRoomIdentity()))
 					 {
-						 showAvailable(listOfRooms[i]);					 
+						 showAvailableTime(listOfRooms[i]);
+						 break;
 					 }
 					 else	// If none, assign nothing
 					 {
-						 
+						 System.out.println("No such room exists (RoomMangementSystem)");
 					 }
 				 }
 			 }
 		}
 	}
 	
-	private upperBar group1;
-	private middleBar group2;
-	private lowerBar group3;
-	
 	// Update the display list according to the active user's list of logs && update the user's log List. If there are changes made by admin
 	public void loadData()
 	{
+		// Because the default dropdown selected is the first item, so we get the available time for the first room
+		showAvailableTime(listOfRooms[0]);
 		group2.reloadList();
 	}
 	
-	public RoomManagementSystem(Professor prof, loginFormGui lfg, standardRoom[] lor, User[] user)
+	public RoomManagementSystem(Professor prof, loginFormGui lfg, ComputerLabRoom[] lor, User[] user)
 	{
 		activeAccount = prof;
 		listOfRooms = lor;

@@ -23,7 +23,7 @@ public class loginFormGui extends JFrame implements ActionListener
 	public User[] listOfUsers = new User[4];
 	public Admin admin1 = new Admin("admin1", password1);
 	public Admin admin2 = new Admin("admin2", password2);
-	public standardRoom[] listOfRooms;
+	public ComputerLabRoom[] listOfRooms;
 	
 // Update Panel Group Layout
 	class groupOne extends JPanel
@@ -56,6 +56,7 @@ public class loginFormGui extends JFrame implements ActionListener
 			}
 		}
 		
+		// Updates the list of recent updates from staffs and admins (Admin part not yet implemented)
 		public void addUpdate(String compiledString)
 		{
 			for(int i = 7; i >= 0; i--)
@@ -118,7 +119,9 @@ public class loginFormGui extends JFrame implements ActionListener
 	{
 		private JPanel userPanel, passPanel;
 		private JLabel userLabel, passLabel;
-		private final JTextField userField, passField;
+		private final JTextField userField;
+		private final JPasswordField passField;
+
 		
 		groupThree()
 		{
@@ -151,7 +154,7 @@ public class loginFormGui extends JFrame implements ActionListener
 			
 			add((userField = new JTextField(25)), gbc);
 			gbc.gridy++;
-			add((passField = new JTextField(25)), gbc);
+			add((passField = new JPasswordField(25)), gbc);
 			
 		}
 		public String getUserText()
@@ -162,10 +165,10 @@ public class loginFormGui extends JFrame implements ActionListener
 		{
 			userField.setText(name);
 		}
-		public String getPassText()
-		{
-			return passField.getText();
-		}
+		public String getPassText() {
+	        // Use getPassword() and convert it to a String securely
+	        return new String(passField.getPassword());
+	    }
 		public void setPassText(String name)
 		{
 			passField.setText(name);
@@ -277,7 +280,7 @@ public class loginFormGui extends JFrame implements ActionListener
 							this.setVisible(false);
 							RoomManagementSystem managementForm = new RoomManagementSystem(userDummy, this, listOfRooms, listOfUsers);
 							managementForm.loadData();
-							managementForm.setSize(620,400);
+							managementForm.setSize(610,362);
 							managementForm.setVisible(false);
 							managementForm.setResizable(false);
 							managementForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -306,10 +309,10 @@ public class loginFormGui extends JFrame implements ActionListener
 							// Shutdown the executor service to release resources
 							this.setVisible(false);
 							AdminFormGui adminForm = new AdminFormGui(userDummy, this);
-							adminForm.loadData();
-							adminForm.setSize(820,460);
+							adminForm.loadData(listOfRooms);
+							adminForm.setSize(730,440);
 							adminForm.setVisible(false);
-							//adminForm.setResizable(false);
+							adminForm.setResizable(false);
 							adminForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 							adminForm.setLocationRelativeTo(null);
 							adminForm.setVisible(true);
